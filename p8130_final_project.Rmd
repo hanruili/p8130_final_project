@@ -1,0 +1,114 @@
+---
+title: "p8130_final_project"
+author: "Hanrui Li"
+date: "2024-12-15"
+output: pdf_document
+---
+
+```{r message=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(caret)
+```
+
+```{r}
+# import dataset (whole data)
+school <- read.csv("Project_1_data.csv", na = c("NA", ",", "")) |>
+  janitor::clean_names() |>
+  drop_na()
+
+# dataset for math score
+math <- school |>
+  select(-reading_score, -writing_score)
+
+# dataset for reading score
+reading <- school |>
+  select(-math_score, -writing_score)
+
+# dataset for writing score
+writing <- school |>
+  select(-math_score, -reading_score)
+```
+
+```{r}
+school_transformed <- school %>%
+mutate(across(everything(), as.factor)) |>
+mutate(across(where(is.factor), ~ as.integer(as.factor(.x)) - 1))
+
+indicator_school <- as.data.frame(model.matrix(~ . - 1, data = school))
+
+indicator_math <- indicator_school |>
+  select(-reading_score, -writing_score)
+```
+
+
+```{r}
+excluded_vars <- c("writing_score", "reading_score")
+predictors <- school[, !names(school) %in% excluded_vars]
+
+# Define the response variable and the predictors
+response <- school$math_score
+predictors <- predictors[, !names(predictors) %in% "math_score"]
+
+# Generate a formula with interaction terms for all pairwise combinations of predictors
+predictor_names <- colnames(predictors)
+interaction_terms <- paste(predictor_names, collapse = " + ")
+formula <- as.formula(paste("math_score ~ (", interaction_terms, ")^2"))
+
+# Fit the linear regression model
+model <- lm(formula, data = school)
+summary(model)
+```
+
+
+```{r}
+lm(math_score ~ . + parent_marital_status*wkly_study_hours, data = math) |>
+  summary()
+
+
+```
+
+
+
+
+```{r}
+
+# Load the library
+library(corrplot)
+
+excluded_vars <- c("math_score", "writing_score", "reading_score")
+predictors <- school_transformed[, !names(school_transformed) %in% excluded_vars]
+predictors_numeric <- predictors[, sapply(predictors, is.numeric)]
+
+# Compute the correlation matrix
+cor_matrix <- cor(predictors_numeric, use = "pairwise.complete.obs")  # Ensures missing values are handled
+
+# Plot the correlation matrix using corrplot
+corrplot(cor_matrix, 
+         method = "color",        # Use color to display correlations
+         type = "upper",          # Show only the upper triangle
+         order = "hclust",        # Cluster variables with similar correlations
+         addCoef.col = "black",   # Add correlation coefficients in black
+         tl.col = "black",        # Text label color
+         tl.srt = 45,             # Rotate axis labels
+         col = colorRampPalette(c("blue", "white", "red"))(200)  # Color scale
+)
+
+```
+
+
+
+```{r}
+lm(math_score ~ . , data = math) |>
+  summary()
+```
+
+
+
+
+
+```{r}
+
+```
+
