@@ -12,6 +12,8 @@ library(ggplot2)
 library(caret)
 ```
 
+## Import, tidy, and select datasets
+
 ```{r}
 # import dataset (whole data)
 school <- read.csv("Project_1_data.csv", na = c("NA", ",", "")) |>
@@ -29,18 +31,28 @@ reading <- school |>
 # dataset for writing score
 writing <- school |>
   select(-math_score, -reading_score)
-```
 
-```{r}
-school_transformed <- school %>%
-mutate(across(everything(), as.factor)) |>
-mutate(across(where(is.factor), ~ as.integer(as.factor(.x)) - 1))
+# whole school dataset transformed to indicator 0, 1, 2, 3, ...
+school_transformed <- school |>
+  mutate(across(everything(), as.factor)) |>
+  mutate(across(where(is.factor), ~ as.integer(as.factor(.x)) - 1))
 
+# whole school dataset transformed to indicator only containing 0 and 1
 indicator_school <- as.data.frame(model.matrix(~ . - 1, data = school))
 
+# math score indicator dataset
 indicator_math <- indicator_school |>
   select(-reading_score, -writing_score)
+
+# reading score indicator dataset
+indicator_reading <- indicator_school |>
+  select(-math_score, -writing_score)
+
+# writing score indicator dataset
+indicator_writing <- indicator_school |>
+  select(-math_score, -reading_score)
 ```
+
 
 
 ```{r}
